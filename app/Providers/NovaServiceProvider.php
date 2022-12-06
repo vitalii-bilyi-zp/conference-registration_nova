@@ -3,9 +3,13 @@
 namespace App\Providers;
 
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redirect;
 use Laravel\Nova\Cards\Help;
 use Laravel\Nova\Nova;
 use Laravel\Nova\NovaApplicationServiceProvider;
+
+use App\Models\User;
 
 class NovaServiceProvider extends NovaApplicationServiceProvider
 {
@@ -42,9 +46,29 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
     protected function gate()
     {
         Gate::define('viewNova', function ($user) {
-            return in_array($user->email, [
-                //
-            ]);
+            if ($user->type === User::ADMIN_TYPE) {
+                return true;
+            }
+
+            // If user doesn't have access to nova, log them out.
+            // This prevents them for being stuck in 403 page.
+            Auth::logout();
+
+            return false;
+        });
+    }
+
+    /**
+     * Configure the Nova authorization services.
+     *
+     * @return void
+     */
+    protected function authorization()
+    {
+        $this->gate();
+
+        Nova::auth(function ($request) {
+            return Gate::check('viewNova', [$request->user()]);
         });
     }
 
