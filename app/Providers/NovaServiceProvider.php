@@ -46,7 +46,7 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
     protected function gate()
     {
         Gate::define('viewNova', function ($user) {
-            if ($user->type === User::ADMIN_TYPE) {
+            if ($user->isAdmin()) {
                 return true;
             }
 
