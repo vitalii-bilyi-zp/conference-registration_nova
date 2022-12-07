@@ -4,6 +4,9 @@ namespace App\Nova;
 
 use Illuminate\Http\Request;
 use Laravel\Nova\Fields\ID;
+use Laravel\Nova\Fields\Text;
+use Laravel\Nova\Fields\Date;
+use Laravel\Nova\Fields\Password;
 use Laravel\Nova\Http\Requests\NovaRequest;
 
 use App\Models\User;
@@ -55,6 +58,29 @@ class Listener extends Resource
     {
         return [
             ID::make()->sortable(),
+
+            Text::make('First name', 'firstname')
+                ->sortable()
+                ->rules('required', 'max:255'),
+
+            Text::make('Last name', 'lastname')
+                ->sortable()
+                ->rules('required', 'max:255'),
+
+            Date::make('Birthdate')
+                ->sortable()
+                ->rules('required', 'before:today'),
+
+            Text::make('Email')
+                ->sortable()
+                ->rules('required', 'email', 'max:255')
+                ->creationRules('unique:users,email')
+                ->updateRules('unique:users,email,{{resourceId}}'),
+
+            Password::make('Password')
+                ->onlyOnForms()
+                ->creationRules('required', 'string', 'min:8', 'max:255')
+                ->updateRules('nullable', 'string', 'min:8', 'max:255'),
         ];
     }
 
