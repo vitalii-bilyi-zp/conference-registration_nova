@@ -7,9 +7,12 @@ use Laravel\Nova\Fields\ID;
 use Laravel\Nova\Fields\Text;
 use Laravel\Nova\Fields\Date;
 use Laravel\Nova\Fields\Password;
+use Laravel\Nova\Fields\BelongsTo;
+use Laravel\Nova\Fields\Select;
 use Laravel\Nova\Http\Requests\NovaRequest;
 
 use App\Models\User;
+use App\Models\Country;
 
 class Announcer extends Resource
 {
@@ -49,6 +52,23 @@ class Announcer extends Resource
     }
 
     /**
+     * Get a fresh instance of the model represented by the resource.
+     *
+     * @return mixed
+     */
+    public static function newModel()
+    {
+        $model = static::$model;
+        $instance = new $model;
+
+        if ($instance->type == null) {
+            $instance->type = User::ANNOUNCER_TYPE;
+        }
+
+        return $instance;
+    }
+
+    /**
      * Get the fields displayed by the resource.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -70,6 +90,32 @@ class Announcer extends Resource
             Date::make('Birthdate')
                 ->sortable()
                 ->rules('required', 'before:today'),
+
+            BelongsTo::make('Country ID', 'country', 'App\Nova\Country')
+                ->sortable()
+                ->onlyOnIndex(),
+
+            BelongsTo::make('Country')
+                ->display(function ($country) {
+                    return $country->name;
+                })
+                ->onlyOnDetail(),
+
+            Select::make('Country', 'country_id')
+                ->options(function () {
+                    return Country::all()
+                        ->reduce(function ($carry, $item) {
+                            $carry[$item->id] = $item->name;
+                            return $carry;
+                        }, []);
+                })
+                ->displayUsingLabels()
+                ->rules('required')
+                ->onlyOnForms(),
+
+            Text::make('Phone')
+                ->sortable()
+                ->rules('required', 'max:255'),
 
             Text::make('Email')
                 ->sortable()
